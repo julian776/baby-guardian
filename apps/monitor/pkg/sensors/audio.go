@@ -11,12 +11,23 @@ type Audio struct {
 	interval time.Duration
 }
 
+func NewAudio(name string, interval time.Duration) *Audio {
+	return &Audio{
+		name:     name,
+		interval: interval,
+	}
+}
+
 func (a *Audio) Name() string {
 	return a.name
 }
 
 func (a *Audio) Interval() time.Duration {
 	return a.interval
+}
+
+func (a *Audio) Stop(context.Context) error {
+	return nil
 }
 
 func (a *Audio) Start(context.Context) (<-chan Signal, error) {
@@ -42,7 +53,7 @@ func (a *Audio) GenerateAudioData() float64 {
 
 	isCrying := rand.Intn(100) <= 2
 	if isCrying {
-		multiplier = 10.0
+		multiplier = 20.0
 	}
 
 	return rand.Float64() * multiplier
