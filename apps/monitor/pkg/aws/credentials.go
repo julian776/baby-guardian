@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -20,7 +21,7 @@ func GetCredentials(filePath string) aws.CredentialsProvider {
 
 func getCredentials(filePath string) func(context.Context) (aws.Credentials, error) {
 	return func(ctx context.Context) (aws.Credentials, error) {
-		file, err := os.Open(filePath)
+		file, err := os.Open(filepath.Clean(filePath))
 		if err != nil {
 			return aws.Credentials{}, err
 		}
