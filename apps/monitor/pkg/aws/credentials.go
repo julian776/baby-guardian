@@ -14,11 +14,11 @@ var (
 	errInvalidCredentialsFile = errors.New("invalid credentials file")
 )
 
-func CredentialsProvider(filePath string) aws.CredentialsProvider {
-	return aws.NewCredentialsCache(aws.CredentialsProviderFunc(credentialsProvider(filePath)))
+func GetCredentials(filePath string) aws.CredentialsProvider {
+	return aws.NewCredentialsCache(aws.CredentialsProviderFunc(getCredentials(filePath)))
 }
 
-func credentialsProvider(filePath string) func(context.Context) (aws.Credentials, error) {
+func getCredentials(filePath string) func(context.Context) (aws.Credentials, error) {
 	return func(ctx context.Context) (aws.Credentials, error) {
 		file, err := os.Open(filePath)
 		if err != nil {
