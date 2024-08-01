@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,8 @@ var (
 	errInvalidCredentialsFile = errors.New("invalid credentials file")
 )
 
+// GetCredentials returns a new aws.CredentialsProvider
+// that reads AWS credentials from a file.
 func GetCredentials(filePath string) aws.CredentialsProvider {
 	return aws.NewCredentialsCache(aws.CredentialsProviderFunc(getCredentials(filePath)))
 }
@@ -35,7 +38,9 @@ func getCredentials(filePath string) func(context.Context) (aws.Credentials, err
 		for i := 0; i < 2; i++ {
 			bytes, err := r.ReadBytes('\n')
 			if err != nil {
-				return aws.Credentials{}, err
+				if err != io.EOF {
+					return aws.Credentials{}, err
+				}
 			}
 
 			// Parse credentials
@@ -44,9 +49,10 @@ func getCredentials(filePath string) func(context.Context) (aws.Credentials, err
 				return aws.Credentials{}, errInvalidCredentialsFile
 			}
 
-			if strings.Contains(s[0], "access") {
+			key := s[0]
+			if strings.Contains(key, "access") {
 				accessKey = strings.TrimSpace(s[1])
-			} else if strings.Contains(s[1], "secret") {
+			} else if strings.Contains(key, "secret") {
 				secretKey = strings.TrimSpace(s[1])
 			} else {
 				return aws.Credentials{}, errInvalidCredentialsFile
