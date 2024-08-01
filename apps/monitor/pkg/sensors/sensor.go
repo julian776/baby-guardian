@@ -3,6 +3,8 @@ package sensors
 import (
 	"context"
 	"time"
+
+	pb "github.com/julian776/baby-guardian/protos"
 )
 
 type Sensor interface {
@@ -15,7 +17,7 @@ type Sensor interface {
 	//
 	// A sensor must send at least one signal per interval. If no signals
 	// are sent, the sensor is considered to be in an error state.
-	Start(context.Context) (<-chan Signal, error)
+	Start(context.Context) (<-chan *pb.Signal, error)
 
 	// Stop stops the sensor.
 	Stop(context.Context) error

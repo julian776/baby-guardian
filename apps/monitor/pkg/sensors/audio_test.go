@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/julian776/baby-guardian/protos"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +46,7 @@ func TestAudio_Start(t *testing.T) {
 			}
 
 			signal := <-got
-			assert.Equal(t, AudioTyp.String(), signal.Type)
+			assert.Equal(t, pb.Type_AUDIO, signal.Type)
 			assert.NotZerof(t, signal.Timestamp, "Timestamp should not be zero")
 			assert.NotZerof(t, signal.Value, "Value should not be zero")
 		})

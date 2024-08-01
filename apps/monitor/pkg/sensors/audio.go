@@ -4,6 +4,9 @@ import (
 	"context"
 	"math/rand"
 	"time"
+
+	pb "github.com/julian776/baby-guardian/protos"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Audio struct {
@@ -26,21 +29,29 @@ func (a *Audio) Interval() time.Duration {
 	return a.interval
 }
 
-func (a *Audio) Stop(context.Context) error {
+func (a *Audio) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (a *Audio) Start(context.Context) (<-chan Signal, error) {
-	signalChan := make(chan Signal)
+func (a *Audio) Start(ctx context.Context) (<-chan *pb.Signal, error) {
+	signalChan := make(chan *pb.Signal)
 
 	go func() {
 		timer := time.NewTicker(a.interval)
+		defer timer.Stop()
+
 		for {
-			now := <-timer.C
-			signalChan <- Signal{
-				Type:      AudioTyp.String(),
-				Timestamp: now,
-				Value:     a.GenerateAudioData(),
+			select {
+			case <-ctx.Done():
+				close(signalChan)
+				return
+
+			case now := <-timer.C:
+				signalChan <- &pb.Signal{
+					Type:      pb.Type_AUDIO,
+					Timestamp: timestamppb.New(now),
+					Value:     a.GenerateAudioData(),
+				}
 			}
 		}
 	}()
