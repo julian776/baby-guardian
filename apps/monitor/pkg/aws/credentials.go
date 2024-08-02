@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -24,6 +25,13 @@ func GetCredentials(filePath string) aws.CredentialsProvider {
 
 func getCredentials(filePath string) func(context.Context) (aws.Credentials, error) {
 	return func(ctx context.Context) (aws.Credentials, error) {
+		if filePath == "" {
+			homedir, err := os.UserHomeDir()
+			if err != nil {
+				return aws.Credentials{}, fmt.Errorf("invalid credentials file: %w", err)
+			}
+			filePath = filepath.Join(homedir, ".aws", "credentials")
+		}
 		file, err := os.Open(filepath.Clean(filePath))
 		if err != nil {
 			return aws.Credentials{}, err
