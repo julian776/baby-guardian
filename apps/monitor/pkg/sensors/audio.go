@@ -50,7 +50,7 @@ func (a *Audio) Start(ctx context.Context) (<-chan *pb.Signal, error) {
 				signalChan <- &pb.Signal{
 					Type:      pb.Type_AUDIO,
 					Timestamp: timestamppb.New(now),
-					Value:     a.GenerateAudioData(),
+					Value:     a.generateAudioData(),
 				}
 			}
 		}
@@ -59,7 +59,7 @@ func (a *Audio) Start(ctx context.Context) (<-chan *pb.Signal, error) {
 	return signalChan, nil
 }
 
-func (a *Audio) GenerateAudioData() float64 {
+func (a *Audio) generateAudioData() float64 {
 	multiplier := 1.0
 
 	isCrying := rand.Intn(100) <= 2
