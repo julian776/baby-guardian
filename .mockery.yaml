@@ -1,16 +1,26 @@
 with-expecter: True
 inpackage: True
-dir: "mocks"
-mockname: "Mock{{.InterfaceName}}"
+dir: "{{.InterfaceDir}}/mocks"
 outpkg: "{{.PackageName}}"
+mockname: "Mock{{.InterfaceName}}"
 filename: "mock_{{.InterfaceName}}.go"
 packages:
     github.com/julian776/baby-guardian/monitor/pkg/streamers:
         # place your package-specific config here
         config:
-            
+
         interfaces:
             # select the interfaces you want mocked
             Streamer:
+                # Modify package-level config for this specific interface (if applicable)
+                config:
+
+    github.com/julian776/baby-guardian/monitor/pkg/sensors:
+        # place your package-specific config here
+        config:
+            
+        interfaces:
+            # select the interfaces you want mocked
+            Sensor:
                 # Modify package-level config for this specific interface (if applicable)
                 config:
