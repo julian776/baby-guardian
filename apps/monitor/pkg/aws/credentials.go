@@ -58,11 +58,12 @@ func getCredentials(filePath string) func(context.Context) (aws.Credentials, err
 			}
 
 			key := s[0]
-			if strings.Contains(key, "access") {
+			switch {
+			case strings.Contains(key, "access"):
 				accessKey = strings.TrimSpace(s[1])
-			} else if strings.Contains(key, "secret") {
+			case strings.Contains(key, "secret"):
 				secretKey = strings.TrimSpace(s[1])
-			} else {
+			default:
 				return aws.Credentials{}, errInvalidCredentialsFile
 			}
 		}
