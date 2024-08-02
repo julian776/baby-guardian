@@ -40,9 +40,12 @@ func (m *Monitor) Start(ctx context.Context) error {
 	}
 
 	for _, sensor := range m.sensors {
-		if err := m.monitorSensor(ctx, sensor); err != nil {
-			return err
-		}
+		go func() {
+			err := m.monitorSensor(ctx, sensor)
+			if err != nil {
+				m.logger.Error().Err(err).Msgf("sensor %s failed", sensor.Name())
+			}
+		}()
 	}
 
 	return nil
