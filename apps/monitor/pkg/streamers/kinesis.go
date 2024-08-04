@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/kinesis"
 	"github.com/aws/aws-sdk-go-v2/service/kinesis/types"
-	awsInternal "github.com/julian776/baby-guardian/monitor/pkg/aws"
+	iaws "github.com/julian776/baby-guardian/libs/aws"
 	"github.com/rs/zerolog"
 )
 
@@ -33,7 +33,7 @@ type Kinesis struct {
 func NewKinesis(config *KinesisConfig, logger *zerolog.Logger) *Kinesis {
 	c := aws.Config{
 		Region:      config.Region,
-		Credentials: awsInternal.GetCredentials(config.CredentialsFile),
+		Credentials: iaws.GetCredentials(config.CredentialsFile),
 	}
 
 	return &Kinesis{
@@ -70,24 +70,22 @@ func (k *Kinesis) PutRecord(ctx context.Context, data []byte) error {
 }
 
 func (k *Kinesis) createStream(ctx context.Context) error {
-	ok, err := k.validateStatus(ctx)
+	exists, err := k.validateSreamExists(ctx)
 	if err != nil {
 		return err
 	}
 
-	if ok {
-		return nil
-	}
-
-	_, err = k.Client.CreateStream(ctx, &kinesis.CreateStreamInput{
-		ShardCount: k.Config.ShardCount,
-		StreamName: &k.Config.StreamName,
-		StreamModeDetails: &types.StreamModeDetails{
-			StreamMode: k.Config.StreamMode,
-		},
-	})
-	if err != nil {
-		return err
+	if !exists {
+		_, err = k.Client.CreateStream(ctx, &kinesis.CreateStreamInput{
+			ShardCount: k.Config.ShardCount,
+			StreamName: &k.Config.StreamName,
+			StreamModeDetails: &types.StreamModeDetails{
+				StreamMode: k.Config.StreamMode,
+			},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	timeCtx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -116,11 +114,10 @@ func (k *Kinesis) waitForStreamActive(ctx context.Context) error {
 			break
 		}
 
-		k.logger.Info().Msg("waiting for stream to become active")
+		k.logger.Debug().Msg("waiting for stream to become active")
 		time.Sleep(1 * time.Second)
 	}
 
-	k.logger.Info().Msg("stream is active")
 	return nil
 }
 
@@ -141,6 +138,21 @@ func (k *Kinesis) validateStatus(ctx context.Context) (bool, error) {
 		return true, nil
 	case types.StreamStatusDeleting:
 		return false, errStreamIsBeingDeleted
+	}
+
+	return false, nil
+}
+
+func (k *Kinesis) validateSreamExists(ctx context.Context) (bool, error) {
+	list, err := k.Client.ListStreams(ctx, &kinesis.ListStreamsInput{})
+	if err != nil {
+		return false, err
+	}
+
+	for _, stream := range list.StreamNames {
+		if stream == k.Config.StreamName {
+			return true, nil
+		}
 	}
 
 	return false, nil

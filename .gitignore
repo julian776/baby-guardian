@@ -8,6 +8,9 @@
 *.so
 *.dylib
 
+# Credentials
+credentials.json
+
 # Test binary, built with `go test -c`
 *.test
 
