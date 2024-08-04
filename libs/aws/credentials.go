@@ -99,6 +99,11 @@ func readDefaultCredentials(ctx context.Context, path string) (aws.Credentials, 
 			if err != io.EOF {
 				return aws.Credentials{}, err
 			}
+
+			// Check if there are any bytes left
+			if len(bytes) == 0 {
+				break
+			}
 		}
 
 		// Parse credentials
