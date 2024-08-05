@@ -69,6 +69,20 @@ func (k *Kinesis) PutRecord(ctx context.Context, data []byte) error {
 	return nil
 }
 
+func (k *Kinesis) GetRecords(ctx context.Context) ([][]byte, error) {
+	res, err := k.Client.GetRecords(ctx, &kinesis.GetRecordsInput{})
+	if err != nil {
+		return make([][]byte, 0), err
+	}
+
+	d := make([][]byte, len(res.Records))
+	for i, r := range res.Records {
+		d[i] = r.Data
+	}
+
+	return d, nil
+}
+
 func (k *Kinesis) createStream(ctx context.Context) error {
 	exists, err := k.validateSreamExists(ctx)
 	if err != nil {
