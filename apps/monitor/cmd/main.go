@@ -37,6 +37,10 @@ func main() {
 			"audio",
 			time.Second*5,
 		),
+		sensors.NewTemperature(
+			"temperature",
+			time.Second*5,
+		),
 	)
 
 	err := monitor.Start(rootCtx)
