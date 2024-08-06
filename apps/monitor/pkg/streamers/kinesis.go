@@ -25,9 +25,12 @@ type KinesisConfig struct {
 }
 
 type Kinesis struct {
-	Config *KinesisConfig
-	Client *kinesis.Client
-	logger *zerolog.Logger
+	Config            *KinesisConfig
+	Client            *kinesis.Client
+	StreamArn         string
+	NextShardIterator *string
+	ShardID           *string
+	logger            *zerolog.Logger
 }
 
 func NewKinesis(config *KinesisConfig, logger *zerolog.Logger) *Kinesis {
@@ -58,9 +61,11 @@ func (k *Kinesis) Start(ctx context.Context) error {
 
 func (k *Kinesis) PutRecord(ctx context.Context, data []byte) error {
 	_, err := k.Client.PutRecord(ctx, &kinesis.PutRecordInput{
-		Data:         data,
-		StreamName:   &k.Config.StreamName,
-		PartitionKey: aws.String("1"),
+		Data:            data,
+		StreamName:      &k.Config.StreamName,
+		StreamARN:       &k.StreamArn,
+		PartitionKey:    aws.String("1"),
+		ExplicitHashKey: aws.String("1"),
 	})
 	if err != nil {
 		return err
@@ -70,10 +75,28 @@ func (k *Kinesis) PutRecord(ctx context.Context, data []byte) error {
 }
 
 func (k *Kinesis) GetRecords(ctx context.Context) ([][]byte, error) {
-	res, err := k.Client.GetRecords(ctx, &kinesis.GetRecordsInput{})
+	if k.NextShardIterator == nil {
+		res, err := k.Client.GetShardIterator(ctx, &kinesis.GetShardIteratorInput{
+			ShardId:           k.ShardID,
+			ShardIteratorType: types.ShardIteratorTypeLatest,
+			StreamName:        &k.Config.StreamName,
+			StreamARN:         &k.StreamArn,
+		})
+		if err != nil {
+			return make([][]byte, 0), err
+		}
+
+		k.NextShardIterator = res.ShardIterator
+	}
+
+	res, err := k.Client.GetRecords(ctx, &kinesis.GetRecordsInput{
+		ShardIterator: k.NextShardIterator,
+	})
 	if err != nil {
 		return make([][]byte, 0), err
 	}
+
+	k.NextShardIterator = res.NextShardIterator
 
 	d := make([][]byte, len(res.Records))
 	for i, r := range res.Records {
@@ -142,6 +165,9 @@ func (k *Kinesis) validateStatus(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	k.ShardID = desc.StreamDescription.Shards[0].ShardId
+	k.StreamArn = *desc.StreamDescription.StreamARN
 
 	switch desc.StreamDescription.StreamStatus {
 	case types.StreamStatusActive:
