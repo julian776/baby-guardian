@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/julian776/baby-guardian/analytics/internal/analyzer"
@@ -14,11 +15,14 @@ import (
 )
 
 type Monitor struct {
-	streamer            streamers.Streamer
-	analyzer            *analyzer.Analyzer
+	streamer streamers.Streamer
+	analyzer *analyzer.Analyzer
+
+	lock                *sync.RWMutex
 	lastDangerousSignal *pb.Signal
-	alerts              []alerts.Alerter
-	logger              *zerolog.Logger
+
+	alerts []alerts.Alerter
+	logger *zerolog.Logger
 }
 
 func NewMonitor(
@@ -30,6 +34,7 @@ func NewMonitor(
 	return &Monitor{
 		streamer: streamer,
 		analyzer: analyzer,
+		lock:     &sync.RWMutex{},
 		alerts:   alerts,
 		logger:   logger,
 	}
@@ -75,7 +80,9 @@ func (m *Monitor) consumue(ctx context.Context) error {
 			r := m.analyzer.Analyze(signal)
 			if r.IsDangerous() {
 				m.alert(r.String())
+				m.lock.Lock()
 				m.lastDangerousSignal = signal
+				m.lock.Unlock()
 			}
 		}
 
@@ -85,6 +92,8 @@ func (m *Monitor) consumue(ctx context.Context) error {
 }
 
 func (m *Monitor) LastDangerousSignal() *pb.Signal {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 	return m.lastDangerousSignal
 }
 
