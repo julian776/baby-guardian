@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
+	"net"
 	"os"
 	"os/signal"
 
@@ -12,15 +15,19 @@ import (
 	"github.com/julian776/baby-guardian/monitor/pkg/streamers"
 	pb "github.com/julian776/baby-guardian/protos"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
+	var port = flag.String("port", "8080", "port to listen to")
+	flag.Parse()
+
 	rootCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-
-	logger.Info().Msg("analyzing baby data")
 
 	streamer := streamers.NewKinesis(
 		&streamers.KinesisConfig{
@@ -56,10 +63,41 @@ func main() {
 		alerts.NewConsole(&logger),
 	)
 
-	err := monitor.Start(rootCtx)
+	errGroup, ctx := errgroup.WithContext(rootCtx)
+
+	errGroup.Go(func() error {
+		err := monitor.Start(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to start monitor: %w", err)
+		}
+
+		return nil
+	})
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", *port))
 	if err != nil {
-		logger.Panic().Err(err).Msg("failed to start monitor")
+		logger.Panic().Err(err).Msg("failed to listen")
 	}
 
-	<-rootCtx.Done()
+	srv := grpc.NewServer()
+	analyticsServer := NewAnalyticsServer(monitor)
+	pb.RegisterAnalyticsServer(srv, analyticsServer)
+	reflection.Register(srv)
+
+	errGroup.Go(func() error {
+		logger.Info().Msgf("listening on port %s", *port)
+		if err := srv.Serve(lis); err != nil {
+			return fmt.Errorf("failed to serve: %w", err)
+		}
+
+		return nil
+	})
+
+	<-ctx.Done()
+	logger.Info().Msg("shutting down")
+	srv.GracefulStop()
+
+	if err := errGroup.Wait(); err != nil {
+		logger.Error().Err(err).Msg("stopped with error")
+	}
 }
