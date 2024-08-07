@@ -16,11 +16,11 @@ type Result struct {
 func (r Result) String() string {
 	msg := ""
 	if r.DangerousVariation != 0 {
-		msg += fmt.Sprintf("dangerous variation detected, value: %f\n", r.DangerousVariation)
+		msg += fmt.Sprintf("dangerous variation detected, value: %.2f\n", r.DangerousVariation)
 	}
 
 	if r.DangerousValue != 0 {
-		msg += fmt.Sprintf("dangerous value detected, value: %f out of range [%f, %f]\n", r.DangerousValue, r.Threshold.Min, r.Threshold.Max)
+		msg += fmt.Sprintf("dangerous value detected, value: %.2f out of range [%.2f, %.2f]\n", r.DangerousValue, r.Threshold.Min, r.Threshold.Max)
 	}
 
 	return msg
