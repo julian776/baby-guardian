@@ -14,10 +14,11 @@ import (
 )
 
 type Monitor struct {
-	streamer streamers.Streamer
-	analyzer *analyzer.Analyzer
-	alerts   []alerts.Alerter
-	logger   *zerolog.Logger
+	streamer            streamers.Streamer
+	analyzer            *analyzer.Analyzer
+	lastDangerousSignal *pb.Signal
+	alerts              []alerts.Alerter
+	logger              *zerolog.Logger
 }
 
 func NewMonitor(
@@ -74,12 +75,17 @@ func (m *Monitor) consumue(ctx context.Context) error {
 			r := m.analyzer.Analyze(signal)
 			if r.IsDangerous() {
 				m.alert(r.String())
+				m.lastDangerousSignal = signal
 			}
 		}
 
 		time.Sleep(1 * time.Second)
 	}
 
+}
+
+func (m *Monitor) LastDangerousSignal() *pb.Signal {
+	return m.lastDangerousSignal
 }
 
 func (m *Monitor) alert(message string) {
