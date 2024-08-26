@@ -79,7 +79,9 @@ func main() {
 		logger.Panic().Err(err).Msg("failed to listen")
 	}
 
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(AuthUnaryInterceptor),
+	)
 	analyticsServer := NewAnalyticsServer(monitor)
 	pb.RegisterAnalyticsServer(srv, analyticsServer)
 	reflection.Register(srv)

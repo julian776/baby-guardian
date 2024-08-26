@@ -3,7 +3,7 @@ testdata_dir = "hack/testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = ["--port", "8080"]
+  args_bin = ["--port", "8888"]
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main ./cmd"
   delay = 0
