@@ -2,20 +2,11 @@ package main
 
 import (
 	"context"
-	"os"
-	"strings"
 
 	"github.com/julian776/baby-guardian/analytics/internal/monitor"
 	pb "github.com/julian776/baby-guardian/protos"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-)
-
-var (
-	ErrUnauthenticated = status.Error(codes.Unauthenticated, "unauthenticated")
-	AuthToken          = os.Getenv("AUTH_TOKEN")
 )
 
 type AnalyticsServer struct {
@@ -43,22 +34,4 @@ func (s *AnalyticsServer) LastDangerousSignal(
 	return &pb.LastDangerousSignalResponse{
 		Signal: signal,
 	}, nil
-}
-
-func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	m, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, ErrUnauthenticated
-	}
-
-	if len(m["authorization"]) == 0 {
-		return nil, ErrUnauthenticated
-	}
-
-	s := strings.TrimPrefix(m["authorization"][0], "Bearer ")
-	if s != AuthToken {
-		return nil, ErrUnauthenticated
-	}
-
-	return handler(ctx, req)
 }

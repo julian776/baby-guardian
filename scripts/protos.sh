@@ -8,7 +8,8 @@ protoc --proto_path=${proto_path} \
   --go-grpc_out=${proto_path}/gen/go \
   --go-grpc_opt=paths=source_relative \
   signal.proto \
-  analytics.proto
+  analytics.proto \
+  auth.proto \
 
 cd ${proto_path}/gen/go
 

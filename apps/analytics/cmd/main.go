@@ -12,6 +12,7 @@ import (
 	"github.com/julian776/baby-guardian/analytics/internal/analyzer"
 	"github.com/julian776/baby-guardian/analytics/internal/monitor"
 	"github.com/julian776/baby-guardian/analytics/pkg/alerts"
+	"github.com/julian776/baby-guardian/analytics/pkg/auth"
 	"github.com/julian776/baby-guardian/monitor/pkg/streamers"
 	pb "github.com/julian776/baby-guardian/protos"
 	"github.com/rs/zerolog"
@@ -20,8 +21,11 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+var (
+	port = flag.String("port", "8080", "port to listen to")
+)
+
 func main() {
-	var port = flag.String("port", "8080", "port to listen to")
 	flag.Parse()
 
 	rootCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -80,10 +84,12 @@ func main() {
 	}
 
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(AuthUnaryInterceptor),
+		grpc.UnaryInterceptor(auth.AuthUnaryInterceptor),
 	)
 	analyticsServer := NewAnalyticsServer(monitor)
 	pb.RegisterAnalyticsServer(srv, analyticsServer)
+	authServer := auth.NewAuthServer()
+	pb.RegisterAuthServer(srv, authServer)
 	reflection.Register(srv)
 
 	errGroup.Go(func() error {
