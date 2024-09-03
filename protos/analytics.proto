@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package analytics;
 
+import "google/protobuf/duration.proto";
 import "signal.proto";
 
 option go_package = "github.com/julian776/baby-guardian/proto";
@@ -10,6 +11,10 @@ service Analytics {
   rpc LastDangerousSignal(
     LastDangerousSignalRequest
   ) returns (LastDangerousSignalResponse) {}
+
+  rpc LastDangerousSignalStream(
+    LastDangerousSignalStreamRequest
+  ) returns (stream LastDangerousSignalResponse) {}
 }
 
 message LastDangerousSignalRequest {
@@ -17,4 +22,8 @@ message LastDangerousSignalRequest {
 
 message LastDangerousSignalResponse {
   signal.Signal signal = 1;
+}
+
+message LastDangerousSignalStreamRequest {
+  google.protobuf.Duration interval = 1;
 }

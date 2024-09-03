@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Analytics_LastDangerousSignal_FullMethodName = "/analytics.Analytics/LastDangerousSignal"
+	Analytics_LastDangerousSignal_FullMethodName       = "/analytics.Analytics/LastDangerousSignal"
+	Analytics_LastDangerousSignalStream_FullMethodName = "/analytics.Analytics/LastDangerousSignalStream"
 )
 
 // AnalyticsClient is the client API for Analytics service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AnalyticsClient interface {
 	LastDangerousSignal(ctx context.Context, in *LastDangerousSignalRequest, opts ...grpc.CallOption) (*LastDangerousSignalResponse, error)
+	LastDangerousSignalStream(ctx context.Context, in *LastDangerousSignalStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[LastDangerousSignalResponse], error)
 }
 
 type analyticsClient struct {
@@ -47,11 +49,31 @@ func (c *analyticsClient) LastDangerousSignal(ctx context.Context, in *LastDange
 	return out, nil
 }
 
+func (c *analyticsClient) LastDangerousSignalStream(ctx context.Context, in *LastDangerousSignalStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[LastDangerousSignalResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Analytics_ServiceDesc.Streams[0], Analytics_LastDangerousSignalStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[LastDangerousSignalStreamRequest, LastDangerousSignalResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Analytics_LastDangerousSignalStreamClient = grpc.ServerStreamingClient[LastDangerousSignalResponse]
+
 // AnalyticsServer is the server API for Analytics service.
 // All implementations must embed UnimplementedAnalyticsServer
 // for forward compatibility.
 type AnalyticsServer interface {
 	LastDangerousSignal(context.Context, *LastDangerousSignalRequest) (*LastDangerousSignalResponse, error)
+	LastDangerousSignalStream(*LastDangerousSignalStreamRequest, grpc.ServerStreamingServer[LastDangerousSignalResponse]) error
 	mustEmbedUnimplementedAnalyticsServer()
 }
 
@@ -64,6 +86,9 @@ type UnimplementedAnalyticsServer struct{}
 
 func (UnimplementedAnalyticsServer) LastDangerousSignal(context.Context, *LastDangerousSignalRequest) (*LastDangerousSignalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LastDangerousSignal not implemented")
+}
+func (UnimplementedAnalyticsServer) LastDangerousSignalStream(*LastDangerousSignalStreamRequest, grpc.ServerStreamingServer[LastDangerousSignalResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method LastDangerousSignalStream not implemented")
 }
 func (UnimplementedAnalyticsServer) mustEmbedUnimplementedAnalyticsServer() {}
 func (UnimplementedAnalyticsServer) testEmbeddedByValue()                   {}
@@ -104,6 +129,17 @@ func _Analytics_LastDangerousSignal_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Analytics_LastDangerousSignalStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(LastDangerousSignalStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AnalyticsServer).LastDangerousSignalStream(m, &grpc.GenericServerStream[LastDangerousSignalStreamRequest, LastDangerousSignalResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Analytics_LastDangerousSignalStreamServer = grpc.ServerStreamingServer[LastDangerousSignalResponse]
+
 // Analytics_ServiceDesc is the grpc.ServiceDesc for Analytics service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +152,12 @@ var Analytics_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Analytics_LastDangerousSignal_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "LastDangerousSignalStream",
+			Handler:       _Analytics_LastDangerousSignalStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "analytics.proto",
 }
