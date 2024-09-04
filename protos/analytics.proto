@@ -13,8 +13,7 @@ service Analytics {
     LastDangerousSignalRequest
   ) returns (LastDangerousSignalResponse) {
     option (google.api.http) = {
-      post: "/analytics/signals/dangerous",
-      body: "*"
+      get: "/analytics/signals/dangerous",
     };
   }
 
@@ -22,8 +21,7 @@ service Analytics {
     LastDangerousSignalStreamRequest
   ) returns (stream LastDangerousSignalResponse) {
     option (google.api.http) = {
-      post: "/analytics/signals/dangerous/stream",
-      body: "*"
+      get: "/analytics/signals/dangerous/stream/{interval}/{limit}",
     };
   }
 }
@@ -37,4 +35,5 @@ message LastDangerousSignalResponse {
 
 message LastDangerousSignalStreamRequest {
   google.protobuf.Duration interval = 1;
+  int32 limit = 2;
 }

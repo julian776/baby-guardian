@@ -35,10 +35,6 @@ func request_Analytics_LastDangerousSignal_0(ctx context.Context, marshaler runt
 	var protoReq LastDangerousSignalRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.LastDangerousSignal(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -47,10 +43,6 @@ func request_Analytics_LastDangerousSignal_0(ctx context.Context, marshaler runt
 func local_request_Analytics_LastDangerousSignal_0(ctx context.Context, marshaler runtime.Marshaler, server AnalyticsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq LastDangerousSignalRequest
 	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := server.LastDangerousSignal(ctx, &protoReq)
 	return msg, metadata, err
@@ -61,8 +53,31 @@ func request_Analytics_LastDangerousSignalStream_0(ctx context.Context, marshale
 	var protoReq LastDangerousSignalStreamRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["interval"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "interval")
+	}
+
+	protoReq.Interval, err = runtime.Duration(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "interval", err)
+	}
+
+	val, ok = pathParams["limit"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "limit")
+	}
+
+	protoReq.Limit, err = runtime.Int32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "limit", err)
 	}
 
 	stream, err := client.LastDangerousSignalStream(ctx, &protoReq)
@@ -85,7 +100,7 @@ func request_Analytics_LastDangerousSignalStream_0(ctx context.Context, marshale
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterAnalyticsHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AnalyticsServer) error {
 
-	mux.Handle("POST", pattern_Analytics_LastDangerousSignal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Analytics_LastDangerousSignal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -110,7 +125,7 @@ func RegisterAnalyticsHandlerServer(ctx context.Context, mux *runtime.ServeMux, 
 
 	})
 
-	mux.Handle("POST", pattern_Analytics_LastDangerousSignalStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Analytics_LastDangerousSignalStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -158,7 +173,7 @@ func RegisterAnalyticsHandler(ctx context.Context, mux *runtime.ServeMux, conn *
 // "AnalyticsClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterAnalyticsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AnalyticsClient) error {
 
-	mux.Handle("POST", pattern_Analytics_LastDangerousSignal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Analytics_LastDangerousSignal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -180,13 +195,13 @@ func RegisterAnalyticsHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 
 	})
 
-	mux.Handle("POST", pattern_Analytics_LastDangerousSignalStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Analytics_LastDangerousSignalStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.Analytics/LastDangerousSignalStream", runtime.WithHTTPPathPattern("/analytics/signals/dangerous/stream"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.Analytics/LastDangerousSignalStream", runtime.WithHTTPPathPattern("/analytics/signals/dangerous/stream/{interval}/{limit}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -208,7 +223,7 @@ func RegisterAnalyticsHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 var (
 	pattern_Analytics_LastDangerousSignal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"analytics", "signals", "dangerous"}, ""))
 
-	pattern_Analytics_LastDangerousSignalStream_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"analytics", "signals", "dangerous", "stream"}, ""))
+	pattern_Analytics_LastDangerousSignalStream_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"analytics", "signals", "dangerous", "stream", "interval", "limit"}, ""))
 )
 
 var (

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/julian776/baby-guardian/analytics/internal/monitor"
@@ -44,9 +45,12 @@ func (s *AnalyticsServer) LastDangerousSignalStream(
 ) error {
 	interval := req.GetInterval().AsDuration()
 	var lastSignal *pb.Signal
+	limit := int(req.GetLimit())
+	if limit <= 0 {
+		limit = math.MaxInt64
+	}
 
-	// TODO: add a way to stop the stream due grpc-gateway limitations
-	for {
+	for i := 0; i < limit; {
 		select {
 		case <-stream.Context().Done():
 			return nil
@@ -73,5 +77,8 @@ func (s *AnalyticsServer) LastDangerousSignalStream(
 
 		lastSignal = signal
 		time.Sleep(interval)
+		i++
 	}
+
+	return nil
 }
