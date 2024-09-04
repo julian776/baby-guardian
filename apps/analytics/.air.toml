@@ -3,7 +3,7 @@ testdata_dir = "hack/testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = ["--port", "8888"]
+  args_bin = ["--grpc-port", "8888", "--http-port", "8889"]
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main ./cmd"
   delay = 0

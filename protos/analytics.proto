@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package analytics;
 
+import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 import "signal.proto";
 
@@ -10,11 +11,21 @@ option go_package = "github.com/julian776/baby-guardian/proto";
 service Analytics {
   rpc LastDangerousSignal(
     LastDangerousSignalRequest
-  ) returns (LastDangerousSignalResponse) {}
+  ) returns (LastDangerousSignalResponse) {
+    option (google.api.http) = {
+      post: "/analytics/signals/dangerous",
+      body: "*"
+    };
+  }
 
   rpc LastDangerousSignalStream(
     LastDangerousSignalStreamRequest
-  ) returns (stream LastDangerousSignalResponse) {}
+  ) returns (stream LastDangerousSignalResponse) {
+    option (google.api.http) = {
+      post: "/analytics/signals/dangerous/stream",
+      body: "*"
+    };
+  }
 }
 
 message LastDangerousSignalRequest {

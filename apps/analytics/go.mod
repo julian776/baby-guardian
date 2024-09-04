@@ -9,11 +9,14 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.15 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.15 // indirect
 	github.com/aws/smithy-go v1.20.3 // indirect
+	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
+	google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884 // indirect
+	google.golang.org/grpc v1.33.1 // indirect
 )
 
 require (
@@ -21,6 +24,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kinesis v1.29.3
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rs/zerolog v1.33.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect

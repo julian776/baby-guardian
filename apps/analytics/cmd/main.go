@@ -5,10 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/aws/aws-sdk-go-v2/service/kinesis/types"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/julian776/baby-guardian/analytics/internal/analyzer"
 	"github.com/julian776/baby-guardian/analytics/internal/monitor"
 	"github.com/julian776/baby-guardian/analytics/pkg/alerts"
@@ -18,11 +20,13 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
 var (
-	port = flag.String("port", "8080", "port to listen to")
+	httpPort = flag.String("http-port", "8888", "rest port to listen to")
+	grpcPort = flag.String("grpc-port", "8889", "grpc port to listen to")
 )
 
 func main() {
@@ -78,7 +82,10 @@ func main() {
 		return nil
 	})
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", *port))
+	grpcServerAddr := ":" + *grpcPort
+	httpServerAddr := ":" + *httpPort
+
+	lis, err := net.Listen("tcp", grpcServerAddr)
 	if err != nil {
 		logger.Panic().Err(err).Msg("failed to listen")
 	}
@@ -93,12 +100,34 @@ func main() {
 	reflection.Register(srv)
 
 	errGroup.Go(func() error {
-		logger.Info().Msgf("listening on port %s", *port)
+		logger.Info().Msgf("listening on %s", grpcServerAddr)
 		if err := srv.Serve(lis); err != nil {
 			return fmt.Errorf("failed to serve: %w", err)
 		}
 
 		return nil
+	})
+
+	errGroup.Go(func() error {
+		gwmux := runtime.NewServeMux()
+		// Register Greeter
+		err = pb.RegisterAnalyticsHandlerFromEndpoint(ctx, gwmux, grpcServerAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+		if err != nil {
+			return fmt.Errorf("failed to register: %w", err)
+		}
+
+		err = pb.RegisterAuthHandlerFromEndpoint(ctx, gwmux, grpcServerAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+		if err != nil {
+			return fmt.Errorf("failed to register: %w", err)
+		}
+
+		gwServer := &http.Server{
+			Addr:    httpServerAddr,
+			Handler: gwmux,
+		}
+
+		logger.Info().Msgf("Serving rest-gRPC-Gateway on %s", httpServerAddr)
+		return gwServer.ListenAndServe()
 	})
 
 	<-ctx.Done()

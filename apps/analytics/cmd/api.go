@@ -44,6 +44,8 @@ func (s *AnalyticsServer) LastDangerousSignalStream(
 ) error {
 	interval := req.GetInterval().AsDuration()
 	var lastSignal *pb.Signal
+
+	// TODO: add a way to stop the stream due grpc-gateway limitations
 	for {
 		select {
 		case <-stream.Context().Done():

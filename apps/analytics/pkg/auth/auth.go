@@ -19,6 +19,7 @@ type CustomClaims struct {
 
 func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	m, ok := metadata.FromIncomingContext(ctx)
+	fmt.Printf("Metadata: %+v\n", m)
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
